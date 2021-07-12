@@ -17,6 +17,9 @@ def shift_df(input_file, injection_point):
     shifted_df.loc[:, ("UV 1_280", "ml")]= input_df.loc[:, ("UV 1_280", "ml")]- input_df["Injection"]["ml"][injection_point-1]
     if ('UV 2_260', 'ml') in list(input_df):
         shifted_df.loc[:, ("UV 2_260", "ml")]= input_df.loc[:, ("UV 2_260", "ml")]- input_df["Injection"]["ml"][injection_point-1]
+    if ('Fraction', 'ml') in list(input_df):
+       shifted_df.loc[:, ('Fraction', 'ml')]= input_df.loc[:, ('Fraction', 'ml')]- input_df["Injection"]["ml"][injection_point-1]
+
     return(shifted_df)
 
 #creates tuple of fraction names and values
@@ -89,7 +92,7 @@ def plot_csv_file(input_file, title = "", plot_fractions=True, output="png", inj
     if peaks==True:
         (peak_x_vals, peak_y_vals) = find_peaks(shifted_df, peak_width)
         for val in np.arange(len(peak_x_vals)):
-            ax.annotate(np.around(peak_x_vals[val], decimals=2), (peak_x_vals[val]-0.035, peak_y_vals[val]+1), fontsize=13)
+            ax.annotate(np.around(peak_x_vals[val], decimals=2), (peak_x_vals[val], peak_y_vals[val]+2), fontsize=13, ha="center")
      
     plt.savefig(output_path, dpi=300)
  
