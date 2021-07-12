@@ -88,7 +88,6 @@ def plot_csv_file(input_file, title = "", plot_fractions=True, output="png", inj
         fractions.minorticks_off()
     if peaks==True:
         (peak_x_vals, peak_y_vals) = find_peaks(shifted_df, peak_width)
-        ax.set_major_formatter(FormatStrFormatter('%.2f'))
         for val in np.arange(len(peak_x_vals)):
             ax.annotate(np.around(peak_x_vals[val], decimals=2), (peak_x_vals[val]-0.035, peak_y_vals[val]+1), fontsize=13)
      
