@@ -9,9 +9,11 @@ from scipy.signal import find_peaks
 #shift value by injection point value
 def shift_df(input_file, injection_point):
     input_df = pd.read_csv(input_file, sep = "\t", encoding="utf-16", header=[1,2])
-    input_df = input_df.rename(columns = {f"Unnamed: {input_df.columns.get_loc(('UV 1_280', 'ml'))+1}_level_0": "UV 280", f"Unnamed: {input_df.columns.get_loc(('Cond', 'ml'))+1}_level_0": "Conductivity", f"Unnamed: {input_df.columns.get_loc(('Conc B', 'ml'))+1}_level_0": "Conc B", list(input_df.loc[:, pd.IndexSlice[:, 'Fraction']])[0][0]: "Fraction name"})
+    input_df = input_df.rename(columns = {f"Unnamed: {input_df.columns.get_loc(('UV 1_280', 'ml'))+1}_level_0": "UV 280", f"Unnamed: {input_df.columns.get_loc(('Cond', 'ml'))+1}_level_0": "Conductivity", f"Unnamed: {input_df.columns.get_loc(('Conc B', 'ml'))+1}_level_0": "Conc B"})
     if ('UV 2_260', 'ml') in list(input_df):
         input_df = input_df.rename(columns={f"Unnamed: {input_df.columns.get_loc(('UV 2_260', 'ml'))+1}_level_0": "UV 260"})
+    if ('Fraction', 'ml') in list(input_df):
+        input_df = input_df.rename(columns={list(input_df.loc[:, pd.IndexSlice[:, 'Fraction']])[0][0]: "Fraction name"})
     shifted_df = input_df.copy()
     shifted_df.loc[:, ("UV 1_280", "ml")]= input_df.loc[:, ("UV 1_280", "ml")]- input_df["Injection"]["ml"][injection_point-1]
     if ('UV 2_260', 'ml') in list(input_df):
@@ -91,8 +93,7 @@ def plot_csv_file(input_file, title = "", plot_fractions=True, output="png", inj
             ax.annotate(np.round(peak_x_vals[val], 2), (peak_x_vals[val]-0.035, peak_y_vals[val]+1), fontsize=13)
      
     plt.savefig(output_path, dpi=300)
-    plt.show()
-
+ 
 # Argument parser
 parser = argparse.ArgumentParser(description='Plots chromatograms from a CSV file')
 parser.add_argument('file_path', type=str,
@@ -117,4 +118,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
