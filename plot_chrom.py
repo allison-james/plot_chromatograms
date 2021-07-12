@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import pandas as pd
 import matplotlib.pyplot as plt
 plt.rc('font', family='Helvetica')
@@ -6,19 +8,25 @@ import numpy as np
 import argparse
 
 #shift value by injection point value
-def shift_df(input_file, injection_point):
+def shift_df(input_file, injection_point=None):
     input_df = pd.read_csv(input_file, sep = "\t", encoding="utf-16", header=[1,2])
     input_df = input_df.rename(columns = {f"Unnamed: {input_df.columns.get_loc(('UV 1_280', 'ml'))+1}_level_0": "UV 280", f"Unnamed: {input_df.columns.get_loc(('Cond', 'ml'))+1}_level_0": "Conductivity", f"Unnamed: {input_df.columns.get_loc(('Conc B', 'ml'))+1}_level_0": "Conc B"})
     if ('UV 2_260', 'ml') in list(input_df):
         input_df = input_df.rename(columns={f"Unnamed: {input_df.columns.get_loc(('UV 2_260', 'ml'))+1}_level_0": "UV 260"})
     if ('Fraction', 'ml') in list(input_df):
         input_df = input_df.rename(columns={list(input_df.loc[:, pd.IndexSlice[:, 'Fraction']])[0][0]: "Fraction name"})
+    if injection_point==None:
+        injection_point=len([x for x in input_df["Injection"]["ml"] if math.isnan(x)==False])
+    if injection_point == 0:
+        injection_value = 0
+    else: injection_value = input_df["Injection"]["ml"][injection_point-1]
+    
     shifted_df = input_df.copy()
-    shifted_df.loc[:, ("UV 1_280", "ml")]= input_df.loc[:, ("UV 1_280", "ml")]- input_df["Injection"]["ml"][injection_point-1]
+    shifted_df.loc[:, ("UV 1_280", "ml")]= input_df.loc[:, ("UV 1_280", "ml")]- injection_value
     if ('UV 2_260', 'ml') in list(input_df):
-        shifted_df.loc[:, ("UV 2_260", "ml")]= input_df.loc[:, ("UV 2_260", "ml")]- input_df["Injection"]["ml"][injection_point-1]
+        shifted_df.loc[:, ("UV 2_260", "ml")]= input_df.loc[:, ("UV 2_260", "ml")]- injection_value
     if ('Fraction', 'ml') in list(input_df):
-       shifted_df.loc[:, ('Fraction', 'ml')]= input_df.loc[:, ('Fraction', 'ml')]- input_df["Injection"]["ml"][injection_point-1]
+       shifted_df.loc[:, ('Fraction', 'ml')]= input_df.loc[:, ('Fraction', 'ml')]- injection_value
 
     return(shifted_df)
 
@@ -50,7 +58,7 @@ def find_peaks(shifted_df, width):
                                      
 
 #creates a plot of the chromatogram
-def plot_csv_file(input_file, title = "", plot_fractions=True, output="png", injection_point=2, y_min=None, y_max =None, x_min=None, x_max=None, peaks=True, peak_width=1):
+def plot_csv_file(input_file, title = "", plot_fractions=True, output="png", injection_point=None, y_min=None, y_max =None, x_min=None, x_max=None, peaks=True, peak_width=1):
     shifted_df = shift_df(input_file, injection_point)
     shifted_df.head(3)
     if title == "":
@@ -81,7 +89,7 @@ def plot_csv_file(input_file, title = "", plot_fractions=True, output="png", inj
     plt.yticks(fontsize=13)
     ax.minorticks_on()
     plt.title(title, fontsize=20)
-    if plot_fractions:
+    if plot_fractions and ('Fraction', 'ml') in list(shifted_df):
         (fraction_names, fraction_vals) = get_fractions(shifted_df)
         fractions = ax.secondary_xaxis("bottom")
         fractions.set_axisbelow(False)
@@ -92,7 +100,7 @@ def plot_csv_file(input_file, title = "", plot_fractions=True, output="png", inj
     if peaks==True:
         (peak_x_vals, peak_y_vals) = find_peaks(shifted_df, peak_width)
         for val in np.arange(len(peak_x_vals)):
-            ax.annotate(np.around(peak_x_vals[val], decimals=2), (peak_x_vals[val], peak_y_vals[val]+2), fontsize=13, ha="center")
+            ax.annotate('{:.2f}'.format(peak_x_vals[val]), (peak_x_vals[val], peak_y_vals[val]+2), fontsize=13, ha="center")
      
     plt.savefig(output_path, dpi=300)
  
@@ -103,7 +111,7 @@ parser.add_argument('file_path', type=str,
 parser.add_argument("--title", "-t", type=str, required=False, default="", help="Displayed title for graph")
 parser.add_argument("--hide_fractions", "-f", required=False, default=True, action="store_false", help="Flag to hide fractions")
 parser.add_argument("--output", "-o", type=str, required=False, default = "png", help="Output file type for the chromatogram")
-parser.add_argument("--injection_point", "-i", type=float, required=False, default = 2, help="injection value")
+parser.add_argument("--injection_point", "-i", type=float, required=False, default=None, help="which injection point to use")
 parser.add_argument("--y_min", type=float, required=False, default=None, help = "Y-axis minimum")
 parser.add_argument("--y_max", type=float, required=False, default=None, help = "Y-axis maximum")
 parser.add_argument("--x_min", type=float, required=False, default=None, help = "X-axis minimum")
