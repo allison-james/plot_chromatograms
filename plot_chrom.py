@@ -15,11 +15,16 @@ def shift_df(input_file, injection_point=None):
         input_df = input_df.rename(columns={f"Unnamed: {input_df.columns.get_loc(('UV 2_260', 'ml'))+1}_level_0": "UV 260"})
     if ('Fraction', 'ml') in list(input_df):
         input_df = input_df.rename(columns={list(input_df.loc[:, pd.IndexSlice[:, 'Fraction']])[0][0]: "Fraction name"})
+    
     if injection_point==None:
-        injection_point=len([x for x in input_df["Injection"]["ml"] if math.isnan(x)==False])
+        if ('Injection', 'ml') in list(input_df):
+            injection_point=len([x for x in input_df["Injection"]["ml"] if math.isnan(x)==False])
+        else:
+            injection_point=0
     if injection_point == 0:
         injection_value = 0
-    else: injection_value = input_df["Injection"]["ml"][injection_point-1]
+    else:
+        injection_value = input_df["Injection"]["ml"][injection_point-1]
     
     shifted_df = input_df.copy()
     shifted_df.loc[:, ("UV 1_280", "ml")]= input_df.loc[:, ("UV 1_280", "ml")]- injection_value
